@@ -66,7 +66,10 @@ func (config *pollyConfig) Synthesize(text, filename string) error {
 
 	Log(err)
 
-	defer Log(outFile.Close())
+	defer func(outFile *os.File) {
+		err := outFile.Close()
+		Log(err)
+	}(outFile)
 
 	_, err = io.Copy(outFile, output.AudioStream)
 
