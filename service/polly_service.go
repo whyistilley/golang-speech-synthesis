@@ -1,11 +1,12 @@
 package service
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
+	"github.com/whyistilley/golang-speech-synthesis/helpers"
 	"io"
-	"log"
 	"os"
 )
 
@@ -14,30 +15,18 @@ type PollyService interface {
 }
 
 type pollyConfig struct {
-	VoiceId string
+	VoiceId      string
+	OutputFormat string
+	TextType     string
+	SampleRate   string
 }
 
-const (
-	AUDIO_FORMAT   = "mp3"
-	KIMBERLY_VOICE = "Kimberly"
-	JOEY_VOICE     = "Joey"
-)
-
-func Log(err error) {
-	if err != nil {
-		log.Printf("%+v", err)
-	}
-}
-
-func NewKimberlyPollyService() PollyService {
+func NewPollyService(VoiceId, OutputFormat, TextType, SampleRate string) PollyService {
 	return &pollyConfig{
-		VoiceId: KIMBERLY_VOICE,
-	}
-}
-
-func NewJoeyPollyService() PollyService {
-	return &pollyConfig{
-		VoiceId: JOEY_VOICE,
+		VoiceId:      VoiceId,
+		OutputFormat: OutputFormat,
+		TextType:     TextType,
+		SampleRate:   SampleRate,
 	}
 }
 
@@ -53,27 +42,39 @@ func (config *pollyConfig) Synthesize(text, filename string) error {
 	pollyClient := createPollyClient()
 
 	input := &polly.SynthesizeSpeechInput{
-		OutputFormat: aws.String(AUDIO_FORMAT),
+		OutputFormat: aws.String(config.OutputFormat),
 		Text:         aws.String(text),
 		VoiceId:      aws.String(config.VoiceId),
+		TextType:     aws.String(config.TextType),
+		SampleRate:   aws.String(config.SampleRate),
 	}
 
 	output, err := pollyClient.SynthesizeSpeech(input)
 
-	Log(err)
+	if err != nil {
+		return err
+	}
 
-	outFile, err := os.Create(filename)
+	fName := fmt.Sprintf("%s.%s", filename, config.OutputFormat)
 
-	Log(err)
+	outFile, err := os.Create(fName)
+
+	if err != nil {
+		return err
+	}
 
 	defer func(outFile *os.File) {
 		err := outFile.Close()
-		Log(err)
+		if err != nil {
+			helpers.Log(err)
+		}
 	}(outFile)
 
 	_, err = io.Copy(outFile, output.AudioStream)
 
-	Log(err)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
