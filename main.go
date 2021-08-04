@@ -1,25 +1,29 @@
 package main
 
 import (
-	"fmt"
+	"github.com/whyistilley/golang-speech-synthesis/helpers"
 	"github.com/whyistilley/golang-speech-synthesis/service"
+	"io/ioutil"
+)
+
+const (
+	// VoiceId voices to pick from = { "Amy", "Matthew"}
+	VoiceId      = "Matthew"
+	OutputFormat = "mp3"
+	TextType     = "ssml"
+	SampleRate   = "24000"
 )
 
 var (
-	kimberly = service.NewKimberlyPollyService()
-	joey     = service.NewJoeyPollyService()
+	polly = service.NewPollyService(VoiceId, OutputFormat, TextType, SampleRate)
 )
 
 func main() {
-	err := kimberly.Synthesize("Hi, I am Kimberly. How are you?", "kimberly.mp3")
+	text, err := ioutil.ReadFile("ssml_script.ssml")
 
-	if err != nil {
-		fmt.Println(err)
-	}
+	helpers.Log(err)
 
-	err = joey.Synthesize("Hi, I am Joey. How are you?", "joey.mp3")
+	err = polly.Synthesize(string(text), VoiceId)
 
-	if err != nil {
-		fmt.Println(err)
-	}
+	helpers.Log(err)
 }
