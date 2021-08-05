@@ -19,7 +19,7 @@ var (
 )
 
 func main() {
-	text, err := ioutil.ReadFile("ssml_script.ssml")
+	text, err := ioutil.ReadFile("script.xml")
 
 	helpers.Log(err)
 
